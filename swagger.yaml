@@ -1,289 +1,523 @@
-
-## Servers
-- https://llm.hachiai.com/slm 
-```
-POST /v1/classify
-```
-**Summary**: Analyze and Classify Invoice Pages
-
-**Description**: Uploads one invoice document (JPEG, JPG, PNG, or PDF). Uses Azure Custom Classifier to predict page ranges that belong to each invoice. Returns classification information per page.
-
-**Request Body:**
-- **file**: `string (binary)` (required) - A single invoice file (PNG, JPG, JPEG, or PDF) to classify pages.
-
-
-**Responses:**
-
-**Response 200**: Classification results with invoice page ranges.
-```json
-{
-  'trace_id': '123e4567-e89b-12d3-a456-426614174000', 
- 'classified_pages': [{'page_number': 1, 'classification': 'Invoice'},
-                      {'page_number': 2, 'classification': 'Summary Page'}],
- 'message': 'File classified successfully.'
-}
-```
-
-**Response 422**: Validation Error
-```json
-{
-  'detail': [{'loc': ['body', 'file'], 
-             'msg': 'field required', 
-             'type': 'value_error.missing'}]
-}
-```
-
----
-```
-GET /v1/trace_id/{trace_id}
-```
-**Summary**: Check Status by Trace ID
-
-**Description**: Retrieve processing status and details for a specific task using its unique trace ID.
-
-**Parameters:**
-- `trace_id` (path): Unique identifier for the processing trace to lookup. *(type: string)*
-
-**Responses:**
-
-**Response 200**: Status information for the supplied trace ID.
-```json
-{
-  'status': 'fulfilled', 
- 'step': 'vision_model_process', 
- 'value': '{
-  "company_name": "VANGUARD STEEL LTD.",
-  "company_website": "Not Found", 
-  "first_column_name": "PRODUCT CODE/DESCRIPTION"
-}', 
- 'retries': 0, 
- 'service_type': 'vision_quest;minicmp2_6', 
- 'files': ['Vanguard Steel Ltd_100330242.pdf'], 
- 'estimated_time': 
- {
-   'queued_requests_count': 0,
-  'wait_time_ms': 15000, 
-  'estimated_execution_time_utc': '2025-07-23T18:30:10.842950+00:00'
- }
-}
-```
-
-**Response 422**: Validation Error
-```json
-{
-  'detail': [{'loc': ['path', 'trace_id'], 
-              'msg': 'Invalid trace_id format', 
-              'type': 'value_error'}]
-}
-```
-
----
-```
-POST /v1/llm/qna/conversations/async
-```
-**Summary**: LLM QnA Playground (Async)
-
-**Description**: Perform asynchronous QnA with a large-language model (LLM) over file documents. Supports multi-file uploads and a user-supplied prompt.
-
-**Request Body:**
-- **files**: `array` (required) - Files for LLM context.
-- **prompt**: `string` (required) - User prompt for LLM QnA.
-- **service_type**: `string` - Internal service code. Usually not modified by external clients. Default: `vision_quest;minicmp2_6`
-- **enable_focus_area**: `string` - Enables LLM focus on key areas in the document. Default: `True`
-- **tags**: `string` - Optional labels for grouping or filtering. Default: `[]`
-- **is_multi_invoice**: `string` - Set to True if uploading a file with multiple invoices. Default: `False`
-- **max_token**: `string` - Maximum token limit for the LLM response. Default: `8096`
-- **temperature**: `string` - Controls randomness. 0 = deterministic. Default: `0`
-- **is_raw_text_required**: `string` - Set to True to also receive raw OCR text. Default: `False`
-
-
-**Responses:**
-
-**Response 200**: Async LLM response with answers to user prompts and extracted information.
-```json
-{
-  'task_id': '46cc58c3-c4bc-477d-8fea-fe65a93e65c1', 
- 'trace_id': 'd18f3186703b6ea616fafef882d91938', 
- 'status': 'Task Added to Queue', 
- 'task_type': 'llm_conversation', 
- 'queued_requests_count': 0, 
- 'wait_time_ms': 15000, 
- 'estimated_execution_time_utc': '2025-07-23T18:30:10.842950+00:00'
-}
-```
-
-**Response 422**: Validation Error
-```json
-{
-  'detail': [{'type': 'missing', 
-              'loc': ['body', 'files'], 
-              'msg': 'Field required', 
-              'input': None}]
-}
-```
-
----
-```
-POST /v1/extract/async
-```
-**Summary**: Document Extraction (Async)
-
-**Description**: Run the DocX Agent asynchronously to extract structured information such as tables, entities, or text from uploaded files.
-
-**Request Body:**
-- **files**: `array` (required) - List of files to be processed.
-- **query**: `string` (required) - Extraction query string (what to extract).
-- **tags**: `string` - Optional tags for request filtering or labeling. Default: `[]`
-
-
-**Responses:**
-
-**Response 200**: Extracted content and information from submitted documents.
-```json
-{
-  'trace_id': 'extract-task-001',
-  'status': 'processing', 
-  'message': 'Your asynchronous document extraction has started. Use the trace_id to check status.'
-}
-```
-
-**Response 422**: Validation Error
-```json
-{
-  'detail': [{'loc': ['body', 'query'], 
-              'msg': 'Extraction query must not be empty', 
-              'type': 'value_error'}]
-}
-```
-
----
-```
-POST /v1/extract
-```
-**Summary**: Document Extraction (Sync)
-
-**Description**: Run the DocX Agent synchronously for immediate extraction of structured data or text from files.
-
-**Request Body:**
-- **files**: `array` (required) - Files to process (array).
-- **query**: `string` (required) - The extraction query string.
-- **tags**: `string` - Optional tags. Default: `[]`
-
-
-**Responses:**
-
-**Response 200**: Extracted content from provided files.
-```json
-{
-  'trace_id': 'extract-sync-123',
-  'status': 'complete',
-  'data': 
-  {
-    'tables': [{'table_id': 1, 'rows': 5, 'columns': 3}], 
-    'entities': [{'field': 'Total Amount', 'value': '$1,234.56'}]
-  }
-}
-```
-
-**Response 422**: Validation Error
-```json
-{
-  'detail':
- [{'loc': ['body', 'files'], 
-   'msg': 'File format not supported',
-   'type': 'value_error'}]
-}
-```
-
----
-```
-POST /v1/llm/qna/async
-```
-**Summary**: LLM QnA (Async)
-
-**Description**: Submit documents and a query string to perform QnA using LLM technology, executed asynchronously for large or complex queries.
-
-**Request Body:**
-- **files**: `array` (required) - Set of files for LLM QnA.
-- **query**: `string` (required) - Query or question to be answered by LLM.
-- **tags**: `string` - Label the request for grouping/filtering. Default: `[]`
-- **service_type**: `string` - Service type code (do not change unless instructed). Default: `vision_quest;minicmp2_6`
-- **enable_validation**: `string` - Enable LLM cross-validation for answer quality. Default: `True`
-- **max_token**: `string` - Set a token limit for the answer. Default: `8096`
-- **temperature**: `string` - Controls randomness/creativity in output. Default: `0`
-- **example_files**: `array` - Optional example files for improving answer context. Default: `[]`
-
-
-**Responses:**
-
-**Response 200**: LLM processed results answering the query.
-```json
-{
-  'task_id': 'a182547b-73f1-43d7-b0cd-df33124355c8',
-  'trace_id': '7d59c6a9833a0f262505f75c2d8af80a',
-  'status': 'Task Added to Queue', 
-  'service_type': 'vision_quest;minicmp2_6', 
-  'max_token': 8096,
-  'temperature': 0, 
-  'enable_vaildation': 'False', 
-  'queued_requests_count': 0, 
-  'wait_time_ms': 90000,
-  'estimated_execution_time_utc': '2025-07-23T11:38:01.317324+00:00'
-}
-```
-
-**Response 422**: Validation Error
-```json
-{
-  'detail': [{'type': 'missing', 'loc': ['body', 'files'], 
-              'msg': 'Field required',
-              'input': None}]
-}
-```
-
----
-
-## Schemas
-
-### Body_azure_invoices_api_v1_classify_post
-
-- **file**: `string (binary)` (required) - A single invoice file (PNG, JPG, JPEG, or PDF) to classify pages.
-
-### Body_docXAgentExtractAsync_v1_extract_async_post
-
-- **files**: `array` (required) - List of files to be processed.
-- **query**: `string` (required) - Extraction query string (what to extract).
-- **tags**: `string` - Optional tags for request filtering or labeling. Default: `[]`
-
-### Body_docXAgentExtract_v1_extract_post
-
-- **files**: `array` (required) - Files to process (array).
-- **query**: `string` (required) - The extraction query string.
-- **tags**: `string` - Optional tags. Default: `[]`
-
-### Body_llm_conversation_with_celery_v1_llm_qna_conversations_async_post
-
-- **files**: `array` (required) - Files for LLM context.
-- **prompt**: `string` (required) - User prompt for LLM QnA.
-- **service_type**: `string` - Internal service code. Usually not modified by external clients. Default: `vision_quest;minicmp2_6`
-- **enable_focus_area**: `string` - Enables LLM focus on key areas in the document. Default: `True`
-- **tags**: `string` - Optional labels for grouping or filtering. Default: `[]`
-- **is_multi_invoice**: `string` - Set to True if uploading a file with multiple invoices. Default: `False`
-- **max_token**: `string` - Maximum token limit for the LLM response. Default: `8096`
-- **temperature**: `string` - Controls randomness. 0 = deterministic. Default: `0`
-- **is_raw_text_required**: `string` - Set to True to also receive raw OCR text. Default: `False`
-
-### Body_llm_qna_with_celery_v1_llm_qna_async_post
-
-- **files**: `array` (required) - Set of files for LLM QnA.
-- **query**: `string` (required) - Query or question to be answered by LLM.
-- **tags**: `string` - Label the request for grouping/filtering. Default: `[]`
-- **service_type**: `string` - Service type code (do not change unless instructed). Default: `vision_quest;minicmp2_6`
-- **enable_validation**: `string` - Enable LLM cross-validation for answer quality. Default: `True`
-- **max_token**: `string` - Set a token limit for the answer. Default: `8096`
-- **temperature**: `string` - Controls randomness/creativity in output. Default: `0`
-- **example_files**: `array` - Optional example files for improving answer context. Default: `[]`
-
-### HTTPValidationError
-
-- **detail**: `array`
+openapi: 3.1.0
+info:
+  title: FastAPI
+  version: 0.1.0
+  description: API endpoints for document analysis, invoice page classification, LLM-based QnA, and document extraction powered by Azure and internal agents. All endpoints require an API key via the X-API-KEY header for authentication.
+servers:
+  - url: https://llm.hachiai.com/slm
+paths:
+  /v1/classify:
+    post:
+      summary: Analyze and Classify Invoice Pages
+      description: Uploads one invoice document (JPEG, JPG, PNG, or PDF). Uses Azure Custom Classifier to predict page ranges that belong to each invoice. Returns classification information per page.
+      operationId: azure_invoices_api_v1_classify_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_azure_invoices_api_v1_classify_post'
+        required: true
+      responses:
+        '200':
+          description: Classification results with invoice page ranges.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trace_id:
+                    type: string
+                  classified_pages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        page_number:
+                          type: integer
+                        classification:
+                          type: string
+                  message:
+                    type: string
+              example:
+                trace_id: "123e4567-e89b-12d3-a456-426614174000"
+                classified_pages:
+                  - page_number: 1
+                    classification: "Invoice"
+                  - page_number: 2
+                    classification: "Summary Page"
+                message: "File classified successfully."
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+              example:
+                detail:
+                  - loc: ["body", "file"]
+                    msg: "field required"
+                    type: "value_error.missing"
+      security:
+        - ApiKeyAuth: []
+  /v1/trace_id/{trace_id}:
+    get:
+      summary: Check Status by Trace ID
+      description: Retrieve processing status and details for a specific task using its unique trace ID.
+      parameters:
+        - name: trace_id
+          in: path
+          required: true
+          description: Unique identifier for the processing trace to lookup.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status information for the supplied trace ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  step:
+                    type: string
+                  value:
+                    type: string
+                  retries:
+                    type: integer
+                  service_type:
+                    type: string
+                  files:
+                    type: array
+                    items:
+                      type: string
+                  estimated_time:
+                    type: object
+                    properties:
+                      queued_requests_count:
+                        type: integer
+                      wait_time_ms:
+                        type: integer
+                      estimated_execution_time_utc:
+                        type: string
+                        format: date-time
+              example:
+                status: "fulfilled"
+                step: "vision_model_process"
+                value: "{\"company_name\": \"VANGUARD STEEL LTD.\", \"company_website\": \"Not Found\", \"first_column_name\": \"PRODUCT CODE/DESCRIPTION\"}"
+                retries: 0
+                service_type: "vision_quest;minicmp2_6"
+                files:
+                  - "Vanguard Steel Ltd_100330242.pdf"
+                estimated_time:
+                  queued_requests_count: 0
+                  wait_time_ms: 15000
+                  estimated_execution_time_utc: "2025-07-23T18:30:10.842950+00:00"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+              example:
+                detail:
+                  - loc: ["path", "trace_id"]
+                    msg: "Invalid trace_id format"
+                    type: "value_error"
+      security:
+        - ApiKeyAuth: []
+  /v1/llm/qna/conversations/async:
+    post:
+      summary: LLM QnA Playground (Async)
+      description: Perform asynchronous QnA with a large-language model (LLM) over file documents. Supports multi-file uploads and a user-supplied prompt.
+      operationId: llm_conversation_with_celery_v1_llm_qna_conversations_async_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_llm_conversation_with_celery_v1_llm_qna_conversations_async_post'
+        required: true
+      responses:
+        '200':
+          description: Async LLM response with answers to user prompts and extracted information.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+                  trace_id:
+                    type: string
+                  status:
+                    type: string
+                  task_type:
+                    type: string
+                  queued_requests_count:
+                    type: integer
+                  wait_time_ms:
+                    type: integer
+                  estimated_execution_time_utc:
+                    type: string
+                    format: date-time
+              example:
+                task_id: "46cc58c3-c4bc-477d-8fea-fe65a93e65c1"
+                trace_id: "d18f3186703b6ea616fafef882d91938"
+                status: "Task Added to Queue"
+                task_type: "llm_conversation"
+                queued_requests_count: 0
+                wait_time_ms: 15000
+                estimated_execution_time_utc: "2025-07-23T18:30:10.842950+00:00"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+              example:
+                detail:
+                  - type: "missing"
+                    loc:
+                      - "body"
+                      - "files"
+                    msg: "Field required"
+                    input: null
+      security:
+        - ApiKeyAuth: []
+  /v1/extract/async:
+    post:
+      summary: Document Extraction (Async)
+      description: Run the DocX Agent asynchronously to extract structured information such as tables, entities, or text from uploaded files.
+      operationId: docXAgentExtractAsync_v1_extract_async_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_docXAgentExtractAsync_v1_extract_async_post'
+        required: true
+      responses:
+        '200':
+          description: Extracted content and information from submitted documents.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trace_id:
+                    type: string
+                  status:
+                    type: string
+                  message:
+                    type: string
+              example:
+                trace_id: "extract-task-001"
+                status: "processing"
+                message: "Your asynchronous document extraction has started. Use the trace_id to check status."
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+              example:
+                detail:
+                  - loc: ["body", "query"]
+                    msg: "Extraction query must not be empty"
+                    type: "value_error"
+      security:
+        - ApiKeyAuth: []
+  /v1/extract:
+    post:
+      summary: Document Extraction (Sync)
+      description: Run the DocX Agent synchronously for immediate extraction of structured data or text from files.
+      operationId: docXAgentExtract_v1_extract_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_docXAgentExtract_v1_extract_post'
+        required: true
+      responses:
+        '200':
+          description: Extracted content from provided files.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trace_id:
+                    type: string
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      tables:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            table_id:
+                              type: integer
+                            rows:
+                              type: integer
+                            columns:
+                              type: integer
+                      entities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            field:
+                              type: string
+                            value:
+                              type: string
+              example:
+                trace_id: "extract-sync-123"
+                status: "complete"
+                data:
+                  tables:
+                    - table_id: 1
+                      rows: 5
+                      columns: 3
+                  entities:
+                    - field: "Total Amount"
+                      value: "$1,234.56"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+              example:
+                detail:
+                  - loc: ["body", "files"]
+                    msg: "File format not supported"
+                    type: "value_error"
+      security:
+        - ApiKeyAuth: []
+  /v1/llm/qna/async:
+    post:
+      summary: LLM QnA (Async)
+      description: Submit documents and a query string to perform QnA using LLM technology, executed asynchronously for large or complex queries.
+      operationId: llm_qna_with_celery_v1_llm_qna_async_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_llm_qna_with_celery_v1_llm_qna_async_post'
+        required: true
+      responses:
+        '200':
+          description: LLM processed results answering the query.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+                  trace_id:
+                    type: string
+                  status:
+                    type: string
+                  service_type:
+                    type: string
+                  max_token:
+                    type: integer
+                  temperature:
+                    type: integer
+                  enable_vaildation:  # note: spelling as per user input; consider correcting in your spec if needed
+                    type: string
+                  queued_requests_count:
+                    type: integer
+                  wait_time_ms:
+                    type: integer
+                  estimated_execution_time_utc:
+                    type: string
+                    format: date-time
+              example:
+                task_id: "a182547b-73f1-43d7-b0cd-df33124355c8"
+                trace_id: "7d59c6a9833a0f262505f75c2d8af80a"
+                status: "Task Added to Queue"
+                service_type: "vision_quest;minicmp2_6"
+                max_token: 8096
+                temperature: 0
+                enable_vaildation: "False"
+                queued_requests_count: 0
+                wait_time_ms: 90000
+                estimated_execution_time_utc: "2025-07-23T11:38:01.317324+00:00"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+              example:
+                detail:
+                  - type: "missing"
+                    loc:
+                      - "body"
+                      - "files"
+                    msg: "Field required"
+                    input: null
+      security:
+        - ApiKeyAuth: []
+components:
+  schemas:
+    Body_azure_invoices_api_v1_classify_post:
+      title: Body_azure_invoices_api_v1_classify_post
+      type: object
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: A single invoice file (PNG, JPG, JPEG, or PDF) to classify pages.
+    Body_docXAgentExtractAsync_v1_extract_async_post:
+      title: Body_docXAgentExtractAsync_v1_extract_async_post
+      type: object
+      required:
+        - files
+        - query
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: List of files to be processed.
+        query:
+          type: string
+          description: Extraction query string (what to extract).
+        tags:
+          type: string
+          default: '[]'
+          description: Optional tags for request filtering or labeling.
+    Body_docXAgentExtract_v1_extract_post:
+      title: Body_docXAgentExtract_v1_extract_post
+      type: object
+      required:
+        - files
+        - query
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Files to process (array).
+        query:
+          type: string
+          description: The extraction query string.
+        tags:
+          type: string
+          default: '[]'
+          description: Optional tags.
+    Body_llm_conversation_with_celery_v1_llm_qna_conversations_async_post:
+      title: Body_llm_conversation_with_celery_v1_llm_qna_conversations_async_post
+      type: object
+      required:
+        - files
+        - prompt
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Files for LLM context.
+        prompt:
+          type: string
+          description: User prompt for LLM QnA.
+        service_type:
+          type: string
+          default: vision_quest;minicmp2_6
+          description: Internal service code. Usually not modified by external clients.
+        enable_focus_area:
+          type: string
+          default: 'True'
+          description: Enables LLM focus on key areas in the document.
+        tags:
+          type: string
+          default: '[]'
+          description: Optional labels for grouping or filtering.
+        is_multi_invoice:
+          type: string
+          default: 'False'
+          description: Set to True if uploading a file with multiple invoices.
+        max_token:
+          type: string
+          default: '8096'
+          description: Maximum token limit for the LLM response.
+        temperature:
+          type: string
+          default: '0'
+          description: Controls randomness. 0 = deterministic.
+        is_raw_text_required:
+          type: string
+          default: 'False'
+          description: Set to True to also receive raw OCR text.
+    Body_llm_qna_with_celery_v1_llm_qna_async_post:
+      title: Body_llm_qna_with_celery_v1_llm_qna_async_post
+      type: object
+      required:
+        - files
+        - query
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: Set of files for LLM QnA.
+        query:
+          type: string
+          description: Query or question to be answered by LLM.
+        tags:
+          type: string
+          default: '[]'
+          description: Label the request for grouping/filtering.
+        service_type:
+          type: string
+          default: vision_quest;minicmp2_6
+          description: Service type code (do not change unless instructed).
+        enable_validation:
+          type: string
+          default: 'True'
+          description: Enable LLM cross-validation for answer quality.
+        max_token:
+          type: string
+          default: '8096'
+          description: Set a token limit for the answer.
+        temperature:
+          type: string
+          default: '0'
+          description: Controls randomness/creativity in output.
+        example_files:
+          type: array
+          items:
+            type: string
+            format: binary
+          default: []
+          description: Optional example files for improving answer context.
+    HTTPValidationError:
+      title: HTTPValidationError
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      description: 'API Key needed in each request header for authorization (format: ''X-API-KEY: <your key>'').'
+security:
+  - ApiKeyAuth: []
