@@ -3,10 +3,21 @@ info:
   title: HachiAI APIs
   version: 1.0.0
   description: >
-    API endpoints for document classification and LLM-based document question answering.
-    All endpoints require an API key via the X-API-KEY header for authentication.
+    The HachiAI API lets you:
+
+    Classify and analyze invoice documents
+    
+    - Check the status of your processing tasks
+    
+    - Extract data like tables or text from documents
+    
+    - Ask questions about your documents using powerful AI
+    
+    - Every request needs an API key, which you should pass in the apiKey header.
+    
+    - Get your API key, explore the endpoints below, and you can get started in minutes!
 servers:
-  - url: https://llm.hachiai.com/slm
+  - url: https://kong-uat-proxy.hachiai.com/quest
 tags:
   - name: Document Classification
     description: Classify and analyze document page ranges
@@ -194,7 +205,7 @@ components:
     ApiKeyAuth:
       type: apiKey
       in: header
-      name: X-API-KEY
+      name: apiKey
       description: "Enter your API key"
 
   schemas:
