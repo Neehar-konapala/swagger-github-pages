@@ -6,8 +6,7 @@ info:
     API endpoints for document classification and LLM-based document question answering.
     All endpoints require an API key via the X-API-KEY header for authentication.
 servers:
-  - url: https://api.hachiai.com
-    description: Production server
+  - url: https://llm.hachiai.com/slm
 tags:
   - name: Document Classification
     description: Classify and analyze document page ranges
