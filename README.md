@@ -30,7 +30,15 @@ You must have a valid X-API-KEY. If you do not have one, contact your administr
 
 Review the available endpoints in the documentation. For this API, you’ll see:
 
-MethodEndpointWhat it doesPOST/v1/classifyAnalyze and classify invoice pagesGET/v1/trace\_id/{trace\_id}Check processing status by trace IDPOST/v1/llm/qna/conversations/asyncLLM QnA Playground (Async)POST/v1/extract/asyncDocument Extraction (Async)POST/v1/extractDocument Extraction (Sync)POST/v1/llm/qna/asyncLLM QnA (Async)
+Method|Endpoint|What it does|
+------|--------|------------|
+POST| /v1/classify| Analyze and classify invoice pages|
+GET | /v1/trace\_id/{trace\_id}| Check processing status by trace ID|
+POST| /v1/llm/qna/conversations/async| LLM QnA Playground (Async) |
+POST| /v1/extract/async | Document Extraction (Async) |
+POST| /v1/extract | Document Extraction (Sync) |
+POST| /v1/llm/qna/async | LLM QnA (Async)|
+
 
 4\. Make a Test API Request
 ---------------------------
