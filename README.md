@@ -1,58 +1,75 @@
-# How to host Swagger API documentation with GitHub Pages
-[<img alt="The blog of Peter Evans: How to Host Swagger Documentation With Github Pages" title="View blog post" src="https://peterevans.dev/img/blog-published-badge.svg">](https://peterevans.dev/posts/how-to-host-swagger-docs-with-github-pages/)
+HachiAI API Documentation
+=========================
 
-This repository is a template for using the [Swagger UI](https://github.com/swagger-api/swagger-ui) to dynamically generate beautiful documentation for your API and host it for free with GitHub Pages.
+Live Demo
+---------
 
-The template will periodically auto-update the Swagger UI dependency and create a pull request. See the [GitHub Actions workflow here](.github/workflows/update-swagger.yml).
+Visit your hosted Swagger UI documentation at:https://{your-github-username}.github.io/{your-repository-name}/
 
-The example API specification used by this repository can be seen hosted at [https://peter-evans.github.io/swagger-github-pages](https://peter-evans.github.io/swagger-github-pages/).
+Using the Documentation to Test APIs
+------------------------------------
 
-## Steps to use this template
+With Swagger UI, you can test your APIs directly from the web browser — no Postman or command line is needed. Here’s how:
 
-1. Click the `Use this template` button above to create a new repository from this template.
+1\. Get Your API Key
+--------------------
 
-2. Go to the settings for your repository at `https://github.com/{github-username}/{repository-name}/settings` and enable GitHub Pages.
+You must have a valid X-API-KEY. If you do not have one, contact your administrator or support team.
 
-    ![Headers](/screenshots/swagger-github-pages.png?raw=true)
+2\. Authorize Yourself
+----------------------
+
+*   On your Swagger page, click the green **Authorize** button at the top or next to any endpoint.
     
-3. Browse to the Swagger documentation at `https://{github-username}.github.io/{repository-name}/`.
-
-
-## Steps to manually configure in your own repository
-
-1. Download the latest stable release of the Swagger UI [here](https://github.com/swagger-api/swagger-ui/releases).
-
-2. Extract the contents and copy the "dist" directory to the root of your repository.
-
-3. Move the file "index.html" from the directory "dist" to the root of your repository.
-    ```
-    mv dist/index.html .
-    ```
+*   In the dialog box, enter your API key (just the key, NOT "X-API-KEY: ...").
     
-4. Copy the YAML specification file for your API to the root of your repository.
-
-5. Edit [dist/swagger-initializer.js](dist/swagger-initializer.js) and change the `url` property to reference your local YAML file. 
-    ```javascript
-        window.ui = SwaggerUIBundle({
-            url: "swagger.yaml",
-        ...
-    ```
-    Then fix any references to files in the "dist" directory.
-    ```html
-    ...
-    <link rel="stylesheet" type="text/css" href="dist/swagger-ui.css" >
-    <link rel="icon" type="image/png" href="dist/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="dist/favicon-16x16.png" sizes="16x16" />    
-    ...
-    <script src="dist/swagger-ui-bundle.js"> </script>
-    <script src="dist/swagger-ui-standalone-preset.js"> </script>    
-    ...
-    ```
+*   Click **Authorize**, then **Close**. Now all your API calls from the UI will use this key automatically.
     
-6. Go to the settings for your repository at `https://github.com/{github-username}/{repository-name}/settings` and enable GitHub Pages.
 
-    ![Headers](/screenshots/swagger-github-pages.png?raw=true)
+3\. Explore Endpoints
+
+Review the available endpoints in the documentation. For this API, you’ll see:
+
+MethodEndpointWhat it doesPOST/v1/classifyAnalyze and classify invoice pagesGET/v1/trace\_id/{trace\_id}Check processing status by trace IDPOST/v1/llm/qna/conversations/asyncLLM QnA Playground (Async)POST/v1/extract/asyncDocument Extraction (Async)POST/v1/extractDocument Extraction (Sync)POST/v1/llm/qna/asyncLLM QnA (Async)
+
+4\. Make a Test API Request
+---------------------------
+
+Here’s how to send any request through Swagger UI:
+
+**A. Select an Endpoint**Scroll through the list and click on an endpoint you want to test (e.g., /v1/classify).
+
+**B. Understand the Parameters**The UI shows required and optional parameters for each request, along with helpful documentation and input types.
+
+**C. Try It Out**
+
+*   Click the **Try it out** button on the endpoint section.
     
-7. Browse to the Swagger documentation at `https://{github-username}.github.io/{repository-name}/`.
+*   Fill in the fields:
+    
+    *   For **file uploads**: Use the file picker to select your document.
+        
+    *   For other parameters (e.g., trace ID, prompt): Enter the required values.
+        
 
-   The example API specification used by this repository can be seen hosted at [https://peter-evans.github.io/swagger-github-pages](https://peter-evans.github.io/swagger-github-pages/).
+**D. Execute**Click **Execute**. The UI will display:
+
+*   The full request sent (method, URL, headers, and body)
+    
+*   The live response from your API (status code, headers, and JSON content)
+    
+
+You can repeat these steps for any endpoint!
+
+5\. View Responses
+------------------
+
+All responses — status code, response body, and error messages — will be displayed directly below the request form in real-time. This helps you easily debug and refine your API usage.
+
+*   **Success Example:**
+    
+    *   A JSON object with analysis/classification results.
+        
+*   **Error Example:**
+    
+    *   Error code and helpful message, such as missing required fields or invalid API key.
